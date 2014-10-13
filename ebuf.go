@@ -27,3 +27,9 @@ func (b *Buffer) SetBytes(bs []byte) {
 func (b *Buffer) Bytes() []byte {
 	return b.rope.Bytes()
 }
+
+func (b *Buffer) Action(fn func()) {
+	b.savingState = false
+	fn()
+	b.savingState = true
+}

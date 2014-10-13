@@ -17,3 +17,16 @@ func TestBytes(t *testing.T) {
 		t.Fatal()
 	}
 }
+
+func TestAction(t *testing.T) {
+	b := New()
+	b.Action(func() {
+		b.SetBytes([]byte("foobarbaz"))
+		b.SetBytes([]byte("foobarbaz"))
+		b.SetBytes([]byte("foobarbaz"))
+		b.SetBytes([]byte("foobarbaz"))
+	})
+	if len(b.savedStates) > 0 {
+		t.Fatal()
+	}
+}
