@@ -1,0 +1,4 @@
+ebuf
+====
+
+text editing buffer
