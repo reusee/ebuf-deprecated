@@ -6,21 +6,40 @@ import (
 
 type Buffer struct {
 	rope        *rope.Rope
-	savedStates []*rope.Rope
+	cursors     []Cursor
+	savedStates []State
 	savingState bool
+}
+
+type Cursor int
+
+type State struct {
+	rope    *rope.Rope
+	cursors []Cursor
 }
 
 func New() *Buffer {
 	return &Buffer{
 		rope:        rope.NewFromBytes(nil),
 		savingState: true,
+		cursors:     []Cursor{0},
 	}
 }
 
-func (b *Buffer) SetBytes(bs []byte) {
-	if b.savingState {
-		b.savedStates = append(b.savedStates, b.rope)
+func (b *Buffer) saveState() {
+	if !b.savingState {
+		return
 	}
+	state := State{
+		rope:    b.rope,
+		cursors: make([]Cursor, len(b.cursors)),
+	}
+	copy(state.cursors[:], b.cursors[:])
+	b.savedStates = append(b.savedStates, state)
+}
+
+func (b *Buffer) SetBytes(bs []byte) {
+	b.saveState()
 	b.rope = rope.NewFromBytes(bs)
 }
 
