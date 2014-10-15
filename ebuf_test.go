@@ -18,6 +18,19 @@ func TestBytes(t *testing.T) {
 	}
 }
 
+func TestSubBytes(t *testing.T) {
+	bs := bytes.Repeat([]byte("foobarbaz"), 1)
+	r := New()
+	r.SetBytes(bs)
+	for i := 0; i < len(bs); i++ {
+		for j := 0; j < len(bs)-i; j++ {
+			if !bytes.Equal(r.SubBytes(Cursor(i), j), bs[i:i+j]) {
+				t.Fatal()
+			}
+		}
+	}
+}
+
 func TestAction(t *testing.T) {
 	b := New()
 	b.Action(func() {

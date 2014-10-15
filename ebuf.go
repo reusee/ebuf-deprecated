@@ -29,6 +29,13 @@ func (b *Buffer) Len() int {
 	return b.rope.Len()
 }
 
+func (b *Buffer) SubBytes(cur Cursor, l int) []byte {
+	if l == 1 {
+		return []byte{b.rope.Index(cur.Int())}
+	}
+	return b.rope.Sub(cur.Int(), l)
+}
+
 func (b *Buffer) SetBytes(bs []byte) {
 	b.saveState()
 	b.rope = rope.NewFromBytes(bs)

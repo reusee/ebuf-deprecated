@@ -8,7 +8,7 @@ type Mover func(*Buffer, Cursor, int) Cursor
 
 func RuneMover(buf *Buffer, cur Cursor, n int) Cursor {
 	if n > 0 {
-		bs := buf.rope.Sub(cur.Int(), n*4)
+		bs := buf.SubBytes(cur, n*4)
 		offset := 0
 		for i := 0; i < n; i++ {
 			r, l := utf8.DecodeRune(bs)
@@ -22,7 +22,7 @@ func RuneMover(buf *Buffer, cur Cursor, n int) Cursor {
 	} else {
 		start := cur.Move(n * 4)
 		l := cur - start
-		bs := buf.rope.Sub(start.Int(), l.Int())
+		bs := buf.SubBytes(start, l.Int())
 		offset := 0
 		for i := 0; i < -n; i++ {
 			r, l := utf8.DecodeLastRune(bs)
