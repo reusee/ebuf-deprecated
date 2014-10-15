@@ -1,6 +1,12 @@
 package ebuf
 
+import "sort"
+
 type Cursor int
+
+type Range struct {
+	Begin, End Cursor
+}
 
 func (c Cursor) Int() int {
 	return int(c)
@@ -61,6 +67,49 @@ func (b *Buffer) InsertAtCursors(bs []byte) {
 	})
 }
 
-func (b *Buffer) DeleteAtCursors(mover Mover) {
-	//TODO
+func (b *Buffer) DeleteAtCursors(mover Mover, n int) {
+	ranges := []Range{}
+	for _, c := range b.Cursors {
+		stop := mover(b, c, n)
+		if stop > c {
+			ranges = append(ranges, Range{c, stop})
+		} else {
+			ranges = append(ranges, Range{stop, c})
+		}
+	}
+	sort.Sort(RangesSorter(ranges))
+	delRanges := []Range{}
+	for i, r := range ranges {
+		if i == 0 {
+			delRanges = append(delRanges, r)
+		} else {
+			last := delRanges[len(delRanges)-1]
+			if r.Begin >= last.Begin && r.Begin <= last.End { // overlapped
+				if r.End > last.End {
+					last.End = r.End
+					delRanges[len(delRanges)-1] = last
+				}
+			} else {
+				delRanges = append(delRanges, r)
+			}
+		}
+	}
+	b.Action(func() {
+		adjustCursors := make([]Cursor, len(delRanges))
+		delLens := make([]int, len(delRanges))
+		for i, r := range delRanges {
+			adjustCursors[i] = r.Begin
+			delLens[i] = (r.End - r.Begin).Int()
+		}
+		b.adjustCursors = adjustCursors
+		for i := 0; i < len(b.adjustCursors); i++ {
+			b.Delete(b.adjustCursors[i], delLens[i])
+		}
+	})
 }
+
+type RangesSorter []Range
+
+func (r RangesSorter) Len() int           { return len(r) }
+func (r RangesSorter) Less(i, j int) bool { return r[i].Begin < r[j].Begin }
+func (r RangesSorter) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }

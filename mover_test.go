@@ -1,6 +1,9 @@
 package ebuf
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 func TestRuneMover(t *testing.T) {
 	r := New()
@@ -58,5 +61,14 @@ func TestRuneMover(t *testing.T) {
 	if r.Cursors[0].Int() != 0 {
 		p("%d\n", r.Cursors[0])
 		t.Fatal()
+	}
+}
+
+func BenchmarkRuneMover(b *testing.B) {
+	r := New()
+	r.SetBytes(bytes.Repeat([]byte{'x'}, 5000000))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		r.MoveCursors(RuneMover, 1)
 	}
 }

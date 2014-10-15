@@ -52,3 +52,102 @@ func TestInsertAtCursors(t *testing.T) {
 		t.Fatal()
 	}
 }
+
+func BenchmarkInsertAtCursors(b *testing.B) {
+	r := New()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		r.InsertAtCursors([]byte{'x'})
+	}
+}
+
+func TestDeleteAtCursors(t *testing.T) {
+	r := New()
+	r.SetBytes([]byte("foobarbaz"))
+	r.SetCursor(0)
+	r.SetCursor(3)
+	r.SetCursor(6)
+
+	r.DeleteAtCursors(RuneMover, 1)
+	if !bytes.Equal(r.Bytes(), []byte("ooaraz")) {
+		t.Fatal()
+	}
+	r.Undo()
+	if !bytes.Equal(r.Bytes(), []byte("foobarbaz")) {
+		t.Fatal()
+	}
+	r.Redo()
+
+	r.DeleteAtCursors(RuneMover, 1)
+	if !bytes.Equal(r.Bytes(), []byte("orz")) {
+		t.Fatal()
+	}
+	r.Undo()
+	if !bytes.Equal(r.Bytes(), []byte("ooaraz")) {
+		t.Fatal()
+	}
+	r.Redo()
+
+	r.DeleteAtCursors(RuneMover, 1)
+	if !bytes.Equal(r.Bytes(), nil) {
+		t.Fatal()
+	}
+	r.Undo()
+	if !bytes.Equal(r.Bytes(), []byte("orz")) {
+		t.Fatal()
+	}
+	r.Redo()
+
+	if len(r.Cursors) != 1 && r.Cursors[0] == 1 {
+		t.Fatal()
+	}
+
+	r = New()
+	r.SetBytes([]byte("foobarbaz"))
+	r.SetCursor(3)
+	r.SetCursor(6)
+	r.SetCursor(9)
+
+	r.DeleteAtCursors(RuneMover, -1)
+	if !bytes.Equal(r.Bytes(), []byte("fobaba")) {
+		t.Fatal()
+	}
+	r.Undo()
+	if !bytes.Equal(r.Bytes(), []byte("foobarbaz")) {
+		t.Fatal()
+	}
+	r.Redo()
+
+	r.DeleteAtCursors(RuneMover, -1)
+	if !bytes.Equal(r.Bytes(), []byte("fbb")) {
+		t.Fatal()
+	}
+	r.Undo()
+	if !bytes.Equal(r.Bytes(), []byte("fobaba")) {
+		t.Fatal()
+	}
+	r.Redo()
+
+	r.DeleteAtCursors(RuneMover, -1)
+	if !bytes.Equal(r.Bytes(), nil) {
+		t.Fatal()
+	}
+	r.Undo()
+	if !bytes.Equal(r.Bytes(), []byte("fbb")) {
+		t.Fatal()
+	}
+	r.Redo()
+
+	if len(r.Cursors) != 1 && r.Cursors[0] == 0 {
+		t.Fatal()
+	}
+}
+
+func BenchmarkDeleteAtCursors(b *testing.B) {
+	r := New()
+	r.SetBytes(bytes.Repeat([]byte{'x'}, 5000000))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		r.DeleteAtCursors(RuneMover, 1)
+	}
+}

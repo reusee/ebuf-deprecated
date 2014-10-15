@@ -85,22 +85,3 @@ func TestDelete(t *testing.T) {
 		t.Fatal()
 	}
 }
-
-func BenchmarkRuneMover(b *testing.B) {
-	r := New()
-	r.SetBytes([]byte("我能吞zuo下da玻si璃而不伤身体"))
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		r.Cursors[0] = 0
-		r.MoveCursors(RuneMover, 1)
-		r.MoveCursors(RuneMover, 1)
-		r.MoveCursors(RuneMover, 1)
-		r.MoveCursors(RuneMover, 1)
-		r.MoveCursors(RuneMover, 1)
-		r.MoveCursors(RuneMover, -1)
-		r.MoveCursors(RuneMover, -1)
-		r.MoveCursors(RuneMover, -1)
-		r.MoveCursors(RuneMover, -1)
-		r.MoveCursors(RuneMover, -1)
-	}
-}
