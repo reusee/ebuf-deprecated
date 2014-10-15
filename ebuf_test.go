@@ -26,7 +26,7 @@ func TestAction(t *testing.T) {
 		b.SetBytes([]byte("foobarbaz"))
 		b.SetBytes([]byte("foobarbaz"))
 	})
-	if len(b.savedStates) > 0 {
+	if len(b.savedStates) > 1 {
 		t.Fatal()
 	}
 }
