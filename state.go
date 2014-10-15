@@ -10,9 +10,9 @@ type State struct {
 func (b *Buffer) getState() State {
 	state := State{
 		rope:    b.rope,
-		cursors: make([]Cursor, len(b.cursors)),
+		cursors: make([]Cursor, len(b.Cursors)),
 	}
-	copy(state.cursors[:], b.cursors[:])
+	copy(state.cursors[:], b.Cursors[:])
 	return state
 }
 
@@ -25,6 +25,6 @@ func (b *Buffer) saveState() {
 
 func (b *Buffer) loadState(state State) {
 	b.rope = state.rope
-	b.cursors = make([]Cursor, len(state.cursors))
-	copy(b.cursors, state.cursors)
+	b.Cursors = make([]Cursor, len(state.cursors))
+	copy(b.Cursors, state.cursors)
 }
