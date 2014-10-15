@@ -7,5 +7,21 @@ func (c Cursor) Int() int {
 }
 
 func (c Cursor) Move(n int) Cursor {
-	return c + Cursor(n)
+	n = c.Int() + n
+	if n < 0 {
+		n = 0
+	}
+	return Cursor(n)
+}
+
+func (b *Buffer) InsertAtCursors(bs []byte) {
+	//TODO
+}
+
+func (b *Buffer) DeleteAtCursors(obj Object, count int) {
+	//TODO
+}
+
+func (b *Buffer) MoveCursors(obj Object, count int) {
+	//TODO
 }
