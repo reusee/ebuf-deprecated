@@ -5,11 +5,12 @@ import (
 )
 
 type Buffer struct {
-	rope        *rope.Rope
-	Cursors     []Cursor
-	savedStates []State
-	savingState bool
-	redoStates  []State
+	rope          *rope.Rope
+	Cursors       []Cursor
+	adjustCursors []Cursor
+	savedStates   []State
+	savingState   bool
+	redoStates    []State
 }
 
 func New() *Buffer {
@@ -54,6 +55,11 @@ func (b *Buffer) Insert(cursor Cursor, bs []byte) {
 			newCursors[c] = struct{}{}
 		}
 	}
+	for i, c := range b.adjustCursors {
+		if c >= cursor {
+			b.adjustCursors[i] = b.adjustCursors[i].Move(len(bs))
+		}
+	}
 	cursors := make([]Cursor, 0, len(newCursors))
 	for c, _ := range newCursors {
 		cursors = append(cursors, c)
@@ -72,6 +78,11 @@ func (b *Buffer) Delete(cursor Cursor, length int) {
 			newCursors[c] = struct{}{}
 		} else {
 			newCursors[c.Move(-length)] = struct{}{}
+		}
+	}
+	for i, c := range b.adjustCursors {
+		if c > cursor {
+			b.adjustCursors[i] = b.adjustCursors[i].Move(-length)
 		}
 	}
 	cursors := make([]Cursor, 0, len(newCursors))

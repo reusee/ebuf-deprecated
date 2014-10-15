@@ -39,7 +39,14 @@ func (b *Buffer) UnsetCursor(offset int) {
 }
 
 func (b *Buffer) InsertAtCursors(bs []byte) {
-	//TODO
+	b.Action(func() {
+		adjustCursors := make([]Cursor, len(b.Cursors))
+		copy(adjustCursors[:], b.Cursors[:])
+		b.adjustCursors = adjustCursors
+		for i := 0; i < len(b.adjustCursors); i++ {
+			b.Insert(b.adjustCursors[i], bs)
+		}
+	})
 }
 
 func (b *Buffer) DeleteAtCursors(obj Object, count int) {
