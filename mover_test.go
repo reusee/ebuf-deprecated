@@ -79,38 +79,62 @@ func TestMatchMover(t *testing.T) {
 	r.SetBytes(bs)
 
 	for i := 0; i < 511; i++ {
-		r.MoveCursors(MatchMover([]byte("foo"), 2))
+		r.MoveCursors(MatchMover([]byte("foo"), 2, false))
 		if r.Cursors[0].Int() != (i+1)*3 {
 			t.Fatal()
 		}
 	}
-	r.MoveCursors(MatchMover([]byte("foo"), 2))
+	r.MoveCursors(MatchMover([]byte("foo"), 2, false))
 	if r.Cursors[0].Int() != 511*3 {
+		t.Fatal()
+	}
+
+	r.Cursors[0] = 0
+	for i := 0; i < 512; i++ {
+		r.MoveCursors(MatchMover([]byte("foo"), 1, true))
+		if r.Cursors[0].Int() != (i+1)*3 {
+			t.Fatal()
+		}
+	}
+	r.MoveCursors(MatchMover([]byte("foo"), 1, true))
+	if r.Cursors[0].Int() != 512*3 {
 		t.Fatal()
 	}
 
 	r.Cursors[0] = Cursor(r.Len())
 	for i := 0; i < 511; i++ {
-		r.MoveCursors(MatchMover([]byte("foo"), -2))
+		r.MoveCursors(MatchMover([]byte("foo"), -2, false))
 		if r.Cursors[0].Int() != (511-i)*3 {
 			t.Fatal()
 		}
 	}
-	r.MoveCursors(MatchMover([]byte("foo"), -2))
+	r.MoveCursors(MatchMover([]byte("foo"), -2, false))
 	if r.Cursors[0].Int() != 3 {
+		t.Fatal()
+	}
+
+	r.Cursors[0] = Cursor(r.Len())
+	for i := 0; i < 512; i++ {
+		r.MoveCursors(MatchMover([]byte("foo"), -1, true))
+		if r.Cursors[0].Int() != (511-i)*3 {
+			t.Fatal()
+		}
+	}
+	r.MoveCursors(MatchMover([]byte("foo"), -1, true))
+	if r.Cursors[0].Int() != 0 {
 		t.Fatal()
 	}
 
 	r.SetBytes([]byte("fofofoo"))
 	r.Cursors[0] = 0
-	r.MoveCursors(MatchMover([]byte("foo"), 1))
+	r.MoveCursors(MatchMover([]byte("foo"), 1, false))
 	if r.Cursors[0] != 4 {
 		t.Fatal()
 	}
 
 	r.SetBytes([]byte("foofofo"))
 	r.Cursors[0] = Cursor(r.Len())
-	r.MoveCursors(MatchMover([]byte("foo"), -1))
+	r.MoveCursors(MatchMover([]byte("foo"), -1, false))
 	if r.Cursors[0] != 3 {
 		t.Fatal()
 	}

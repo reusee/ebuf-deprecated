@@ -38,12 +38,13 @@ func RuneMover(n int) Mover {
 	}
 }
 
-func MatchMover(bs []byte, n int) Mover {
+func MatchMover(bs []byte, n int, passthrough bool) Mover {
 	return func(buf *Buffer, cur Cursor) Cursor {
 		if n > 0 {
 			bsIndex := 0
 			offset := 0
 			start := 0
+			matched := false
 			buf.rope.Iter(cur.Int(), func(slice []byte) bool {
 				for _, b := range slice {
 					if b == bs[bsIndex] {
@@ -55,6 +56,7 @@ func MatchMover(bs []byte, n int) Mover {
 						bsIndex = 0
 					}
 					if bsIndex == len(bs) { // matched
+						matched = true
 						n--
 						if n == 0 {
 							return false
@@ -66,6 +68,9 @@ func MatchMover(bs []byte, n int) Mover {
 				}
 				return true
 			})
+			if matched && passthrough {
+				start += len(bs)
+			}
 			return cur.Move(start)
 		} else {
 			bs = reversedBytes(bs)
@@ -94,6 +99,9 @@ func MatchMover(bs []byte, n int) Mover {
 				}
 				return true
 			})
+			if passthrough {
+				start += len(bs)
+			}
 			return cur.Move(-start)
 		}
 	}
