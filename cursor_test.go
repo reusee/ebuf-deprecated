@@ -68,7 +68,7 @@ func TestDeleteAtCursors(t *testing.T) {
 	r.SetCursor(3)
 	r.SetCursor(6)
 
-	r.DeleteAtCursors(RuneMover, 1)
+	r.DeleteAtCursors(RuneMover(1))
 	if !bytes.Equal(r.Bytes(), []byte("ooaraz")) {
 		t.Fatal()
 	}
@@ -78,7 +78,7 @@ func TestDeleteAtCursors(t *testing.T) {
 	}
 	r.Redo()
 
-	r.DeleteAtCursors(RuneMover, 1)
+	r.DeleteAtCursors(RuneMover(1))
 	if !bytes.Equal(r.Bytes(), []byte("orz")) {
 		t.Fatal()
 	}
@@ -88,7 +88,7 @@ func TestDeleteAtCursors(t *testing.T) {
 	}
 	r.Redo()
 
-	r.DeleteAtCursors(RuneMover, 1)
+	r.DeleteAtCursors(RuneMover(1))
 	if !bytes.Equal(r.Bytes(), nil) {
 		t.Fatal()
 	}
@@ -108,7 +108,7 @@ func TestDeleteAtCursors(t *testing.T) {
 	r.SetCursor(6)
 	r.SetCursor(9)
 
-	r.DeleteAtCursors(RuneMover, -1)
+	r.DeleteAtCursors(RuneMover(-1))
 	if !bytes.Equal(r.Bytes(), []byte("fobaba")) {
 		t.Fatal()
 	}
@@ -118,7 +118,7 @@ func TestDeleteAtCursors(t *testing.T) {
 	}
 	r.Redo()
 
-	r.DeleteAtCursors(RuneMover, -1)
+	r.DeleteAtCursors(RuneMover(-1))
 	if !bytes.Equal(r.Bytes(), []byte("fbb")) {
 		t.Fatal()
 	}
@@ -128,7 +128,7 @@ func TestDeleteAtCursors(t *testing.T) {
 	}
 	r.Redo()
 
-	r.DeleteAtCursors(RuneMover, -1)
+	r.DeleteAtCursors(RuneMover(-1))
 	if !bytes.Equal(r.Bytes(), nil) {
 		t.Fatal()
 	}
@@ -148,6 +148,6 @@ func BenchmarkDeleteAtCursors(b *testing.B) {
 	r.SetBytes(bytes.Repeat([]byte{'x'}, 5000000))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		r.DeleteAtCursors(RuneMover, 1)
+		r.DeleteAtCursors(RuneMover(1))
 	}
 }

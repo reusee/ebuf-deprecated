@@ -44,10 +44,10 @@ func (b *Buffer) UnsetCursor(offset int) {
 	b.Cursors = newCursors
 }
 
-func (b *Buffer) MoveCursors(mover Mover, n int) {
+func (b *Buffer) MoveCursors(mover Mover) {
 	cursors := make(map[Cursor]struct{})
 	for _, c := range b.Cursors {
-		cursors[mover(b, c, n)] = struct{}{}
+		cursors[mover(b, c)] = struct{}{}
 	}
 	newCursors := make([]Cursor, 0, len(cursors))
 	for c, _ := range cursors {
@@ -67,10 +67,10 @@ func (b *Buffer) InsertAtCursors(bs []byte) {
 	})
 }
 
-func (b *Buffer) DeleteAtCursors(mover Mover, n int) {
+func (b *Buffer) DeleteAtCursors(mover Mover) {
 	ranges := []Range{}
 	for _, c := range b.Cursors {
-		stop := mover(b, c, n)
+		stop := mover(b, c)
 		if stop > c {
 			ranges = append(ranges, Range{c, stop})
 		} else {
