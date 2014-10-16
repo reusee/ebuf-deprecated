@@ -139,3 +139,55 @@ func TestMatchMover(t *testing.T) {
 		t.Fatal()
 	}
 }
+
+func TestDisplayWidthMover(t *testing.T) {
+	r := New()
+	r.SetBytes([]byte("我能吞zuo下da玻si璃而不伤身体"))
+	r.MoveCursors(DisplayWidthMover(1)) // nil
+	if r.Cursors[0] != 0 {
+		t.Fatal()
+	}
+	r.MoveCursors(DisplayWidthMover(2)) // 我
+	if r.Cursors[0] != 3 {
+		t.Fatal()
+	}
+	r.MoveCursors(DisplayWidthMover(5)) // 能吞z
+	if r.Cursors[0] != 10 {
+		t.Fatal()
+	}
+	r.MoveCursors(DisplayWidthMover(6)) // uo下da
+	if r.Cursors[0] != 17 {
+		t.Fatal()
+	}
+	r.MoveCursors(DisplayWidthMover(16)) // rest
+	if r.Cursors[0].Int() != r.Len() {
+		t.Fatal()
+	}
+	r.MoveCursors(DisplayWidthMover(42)) // overflow
+	if r.Cursors[0].Int() != r.Len() {
+		t.Fatal()
+	}
+	r.Cursors[0] = r.Cursors[0].Move(-9)
+	r.MoveCursors(DisplayWidthMover(42)) // overflow
+	if r.Cursors[0].Int() != r.Len() {
+		t.Fatal()
+	}
+
+	r.Cursors[0] = Cursor(r.Len())
+	r.MoveCursors(DisplayWidthMover(-4)) // 身体
+	if r.Cursors[0].Int() != r.Len()-6 {
+		t.Fatal()
+	}
+	r.MoveCursors(DisplayWidthMover(-16)) // 下da玻si璃而不伤
+	if r.Cursors[0].Int() != 12 {
+		t.Fatal()
+	}
+	r.MoveCursors(DisplayWidthMover(-9)) // 我能吞zuo
+	if r.Cursors[0].Int() != 0 {
+		t.Fatal()
+	}
+	r.MoveCursors(DisplayWidthMover(-16)) // overflow
+	if r.Cursors[0].Int() != 0 {
+		t.Fatal()
+	}
+}

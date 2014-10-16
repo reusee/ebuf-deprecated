@@ -106,3 +106,42 @@ func MatchMover(bs []byte, n int, passthrough bool) Mover {
 		}
 	}
 }
+
+func DisplayWidthMover(n int) Mover {
+	return func(buf *Buffer, cur Cursor) Cursor {
+		if n > 0 {
+			bs := buf.SubBytes(cur, n*4)
+			offset := 0
+			for {
+				r, l := utf8.DecodeRune(bs)
+				if r == utf8.RuneError {
+					break
+				}
+				bs = bs[l:]
+				n -= RuneDisplayWidth(r)
+				if n < 0 {
+					break
+				}
+				offset += l
+			}
+			return cur.Move(offset)
+		} else {
+			start := cur.Move(n * 4)
+			bs := buf.SubBytes(start, (cur - start).Int())
+			offset := 0
+			for {
+				r, l := utf8.DecodeLastRune(bs)
+				if r == utf8.RuneError {
+					break
+				}
+				bs = bs[:len(bs)-l]
+				n += RuneDisplayWidth(r)
+				if n > 0 {
+					break
+				}
+				offset += l
+			}
+			return cur.Move(-offset)
+		}
+	}
+}
