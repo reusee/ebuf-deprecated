@@ -11,6 +11,7 @@ type Buffer struct {
 	savedStates   []State
 	savingState   bool
 	redoStates    []State
+	Scanners      []*Scanner
 }
 
 func New() *Buffer {
