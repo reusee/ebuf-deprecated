@@ -4,14 +4,14 @@ import "testing"
 
 func TestScanner(t *testing.T) {
 	r := New()
-	r.SetScanner(map[string][]string{
+	r.SetBytes([]byte(`foobarbazbazfoobar`))
+
+	scanner := NewScanner(map[string][]string{
 		"foo": {"foo"},
 		"bar": {"bar"},
 		"baz": {"(b)(a)(z)"},
 	})
-	r.SetBytes([]byte(`foobarbazbazfoobar`))
 
-	scanner := r.Scanners[len(r.Scanners)-1]
 	r.rope.IterRune(0, func(ru rune, l int) bool {
 		scanner.FeedRune(ru, l)
 		return true
@@ -42,10 +42,9 @@ func TestScanner(t *testing.T) {
 		})
 	}()
 
-	r.SetScanner(map[string][]string{
+	scanner = NewScanner(map[string][]string{
 		"foo": {"foo", "bar", "baz"},
 	})
-	scanner = r.Scanners[len(r.Scanners)-1]
 	r.rope.IterRune(0, func(ru rune, l int) bool {
 		scanner.FeedRune(ru, l)
 		return true
@@ -71,20 +70,18 @@ func TestScanner(t *testing.T) {
 				t.Fatal()
 			}
 		}()
-		r.SetScanner(map[string][]string{
+		scanner = NewScanner(map[string][]string{
 			"foo": {"^$"},
 		})
-		scanner = r.Scanners[len(r.Scanners)-1]
 		r.rope.IterRune(0, func(ru rune, l int) bool {
 			scanner.FeedRune(ru, l)
 			return true
 		})
 	}()
 
-	r.SetScanner(map[string][]string{
+	scanner = NewScanner(map[string][]string{
 		"foo": {"()"},
 	})
-	scanner = r.Scanners[len(r.Scanners)-1]
 	r.rope.IterRune(0, func(ru rune, l int) bool {
 		scanner.FeedRune(ru, l)
 		return true
@@ -93,10 +90,9 @@ func TestScanner(t *testing.T) {
 		t.Fatal()
 	}
 
-	r.SetScanner(map[string][]string{
+	scanner = NewScanner(map[string][]string{
 		"foo": {".*"},
 	})
-	scanner = r.Scanners[len(r.Scanners)-1]
 	r.rope.IterRune(0, func(ru rune, l int) bool {
 		scanner.FeedRune(ru, l)
 		return true
