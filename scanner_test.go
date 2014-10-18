@@ -1,9 +1,6 @@
 package ebuf
 
-import (
-	"bytes"
-	"testing"
-)
+import "testing"
 
 func TestScanner(t *testing.T) {
 	r := New()
@@ -107,8 +104,6 @@ func TestScanner(t *testing.T) {
 }
 
 func BenchmarkScanner(b *testing.B) {
-	r := New()
-	r.SetBytes(bytes.Repeat([]byte("我能吞zuo下da玻si璃而不伤身体"), 512))
 	scanner := NewScanner(map[string][]string{
 		"zuo": {"zuo"},
 		"da":  {"da"},
@@ -116,9 +111,6 @@ func BenchmarkScanner(b *testing.B) {
 	})
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		r.rope.IterRune(0, func(ru rune, l int) bool {
-			scanner.FeedRune(ru, l)
-			return true
-		})
+		scanner.FeedRune('z', 1)
 	}
 }
