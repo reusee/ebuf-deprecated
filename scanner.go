@@ -10,6 +10,7 @@ type Scanner struct {
 	program      *syntax.Prog
 	captureNames []string
 	threads      []*_Thread
+	tmpThreads   []*_Thread
 	pos          int
 	Captures     []Capture
 }
@@ -61,7 +62,7 @@ func NewScanner(rules map[string][]string) *Scanner {
 
 func (s *Scanner) FeedRune(r rune, l int) {
 	threads := s.threads
-	blockingThreads := []*_Thread{}
+	blockingThreads := s.tmpThreads
 loop:
 	for len(threads) > 0 {
 		thread := threads[len(threads)-1]
@@ -129,6 +130,7 @@ loop:
 			}
 		}
 	}
+	s.tmpThreads = threads
 
 	if len(blockingThreads) > 0 {
 		s.threads = blockingThreads
