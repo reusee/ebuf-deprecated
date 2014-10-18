@@ -9,6 +9,9 @@ import (
 type Scanner struct {
 	program      *syntax.Prog
 	captureNames []string
+	maxCapture   int
+	zeroCapture  []int
+	capturesPool [][]int
 	threads      []*_Thread
 	tmpThreads   []*_Thread
 	pos          int
@@ -17,7 +20,7 @@ type Scanner struct {
 
 type _Thread struct {
 	pc       uint32
-	captures map[uint32]int
+	captures []int
 }
 
 type Capture struct {
@@ -45,16 +48,19 @@ func NewScanner(rules map[string][]string) *Scanner {
 		panic(fmt.Errorf("rule syntax error %v", err))
 	}
 	capNames := re.CapNames()
+	maxCapture := re.MaxCap()
 	re = re.Simplify()
 	program, _ := syntax.Compile(re)
 
 	return &Scanner{
 		program:      program,
 		captureNames: capNames,
+		maxCapture:   maxCapture,
+		zeroCapture:  make([]int, maxCapture+1),
 		threads: []*_Thread{
 			&_Thread{
 				pc:       uint32(program.Start),
-				captures: make(map[uint32]int),
+				captures: make([]int, maxCapture+1),
 			},
 		},
 	}
@@ -75,10 +81,14 @@ loop:
 			switch inst.Op {
 			case syntax.InstAlt, syntax.InstAltMatch:
 				// new thread
-				captures := make(map[uint32]int, len(thread.captures))
-				for nameIndex, pos := range thread.captures {
-					captures[nameIndex] = pos
+				var captures []int
+				if len(s.capturesPool) > 0 {
+					captures = s.capturesPool[len(s.capturesPool)-1]
+					s.capturesPool = s.capturesPool[:len(s.capturesPool)-1]
+				} else {
+					captures = make([]int, s.maxCapture+1)
 				}
+				copy(captures, thread.captures)
 				threads = append(threads, &_Thread{
 					pc:       inst.Arg,
 					captures: captures,
@@ -89,15 +99,15 @@ loop:
 				nameIndex := inst.Arg / 2
 				name := s.captureNames[nameIndex]
 				if name != "" { // skip nameless groups
-					if pos, ok := thread.captures[nameIndex]; ok { // end of named group
+					if pos := thread.captures[nameIndex]; pos > 0 { // end of group
 						s.Captures = append(s.Captures, Capture{
 							Name:  s.captureNames[nameIndex],
-							Begin: Cursor(pos),
+							Begin: Cursor(pos - 1),
 							End:   Cursor(s.pos + l),
 						})
-						delete(thread.captures, nameIndex)
+						thread.captures[nameIndex] = 0
 					} else {
-						thread.captures[nameIndex] = s.pos
+						thread.captures[nameIndex] = s.pos + 1 // 0 means not capturing
 					}
 				}
 				pc = inst.Out
@@ -106,6 +116,7 @@ loop:
 				panic("empty string pattern is not supported")
 			case syntax.InstMatch, syntax.InstFail: // clear all threads, restart
 				blockingThreads = nil
+				s.capturesPool = append(s.capturesPool, thread.captures)
 				break loop
 			case syntax.InstNop:
 				pc = inst.Out
@@ -124,6 +135,7 @@ loop:
 						pc = inst.Out
 						inst = s.program.Inst[pc]
 					} else { // thread dies
+						s.capturesPool = append(s.capturesPool, thread.captures)
 						break runLoop
 					}
 				}
@@ -132,16 +144,21 @@ loop:
 	}
 	s.tmpThreads = threads
 
-	if len(blockingThreads) > 0 {
-		s.threads = blockingThreads
-	} else { // restart
-		s.threads = []*_Thread{
-			{
-				pc:       uint32(s.program.Start),
-				captures: make(map[uint32]int),
-			},
+	if len(blockingThreads) == 0 {
+		var captures []int
+		if len(s.capturesPool) > 0 {
+			captures = s.capturesPool[len(s.capturesPool)-1]
+			s.capturesPool = s.capturesPool[:len(s.capturesPool)-1]
+			copy(captures, s.zeroCapture)
+		} else {
+			captures = make([]int, s.maxCapture+1)
 		}
+		blockingThreads = append(blockingThreads, &_Thread{
+			pc:       uint32(s.program.Start),
+			captures: captures,
+		})
 	}
+	s.threads = blockingThreads
 
 	s.pos += l
 }
