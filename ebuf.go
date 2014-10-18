@@ -5,20 +5,20 @@ import (
 )
 
 type Buffer struct {
-	rope          *rope.Rope
-	Cursors       []Cursor
+	State
 	adjustCursors []Cursor
 	savedStates   []State
 	savingState   bool
 	redoStates    []State
-	Scanners      []*Scanner
 }
 
 func New() *Buffer {
 	return &Buffer{
-		rope:        rope.NewFromBytes(nil),
+		State: State{
+			rope:    rope.NewFromBytes(nil),
+			Cursors: []Cursor{0},
+		},
 		savingState: true,
-		Cursors:     []Cursor{0},
 	}
 }
 
