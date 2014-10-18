@@ -11,7 +11,7 @@ type Scanner struct {
 	captureNames []string
 	maxCapture   int
 	zeroCapture  []int
-	capturesPool [][]int
+	freeThreads  []*_Thread
 	threads      []*_Thread
 	tmpThreads   []*_Thread
 	pos          int
@@ -80,19 +80,18 @@ loop:
 		for {
 			switch inst.Op {
 			case syntax.InstAlt, syntax.InstAltMatch:
-				// new thread
-				var captures []int
-				if len(s.capturesPool) > 0 {
-					captures = s.capturesPool[len(s.capturesPool)-1]
-					s.capturesPool = s.capturesPool[:len(s.capturesPool)-1]
+				var newThread *_Thread
+				if len(s.freeThreads) > 0 {
+					newThread = s.freeThreads[len(s.freeThreads)-1]
+					s.freeThreads = s.freeThreads[:len(s.freeThreads)-1]
 				} else {
-					captures = make([]int, s.maxCapture+1)
+					newThread = &_Thread{
+						captures: make([]int, s.maxCapture+1),
+					}
 				}
-				copy(captures, thread.captures)
-				threads = append(threads, &_Thread{
-					pc:       inst.Arg,
-					captures: captures,
-				})
+				copy(newThread.captures, thread.captures)
+				newThread.pc = inst.Arg
+				threads = append(threads, newThread)
 				pc = inst.Out
 				inst = s.program.Inst[pc]
 			case syntax.InstCapture:
@@ -116,7 +115,7 @@ loop:
 				panic("empty string pattern is not supported")
 			case syntax.InstMatch, syntax.InstFail: // clear all threads, restart
 				blockingThreads = nil
-				s.capturesPool = append(s.capturesPool, thread.captures)
+				s.freeThreads = append(s.freeThreads, thread)
 				break loop
 			case syntax.InstNop:
 				pc = inst.Out
@@ -135,29 +134,31 @@ loop:
 						pc = inst.Out
 						inst = s.program.Inst[pc]
 					} else { // thread dies
-						s.capturesPool = append(s.capturesPool, thread.captures)
+						s.freeThreads = append(s.freeThreads, thread)
 						break runLoop
 					}
 				}
 			}
 		}
 	}
-	s.tmpThreads = threads
 
 	if len(blockingThreads) == 0 {
-		var captures []int
-		if len(s.capturesPool) > 0 {
-			captures = s.capturesPool[len(s.capturesPool)-1]
-			s.capturesPool = s.capturesPool[:len(s.capturesPool)-1]
-			copy(captures, s.zeroCapture)
+		s.freeThreads = append(s.freeThreads, threads...) // free all threads
+		threads = nil
+		var newThread *_Thread
+		if len(s.freeThreads) > 0 {
+			newThread = s.freeThreads[len(s.freeThreads)-1]
+			s.freeThreads = s.freeThreads[:len(s.freeThreads)-1]
 		} else {
-			captures = make([]int, s.maxCapture+1)
+			newThread = &_Thread{
+				captures: make([]int, s.maxCapture+1),
+			}
 		}
-		blockingThreads = append(blockingThreads, &_Thread{
-			pc:       uint32(s.program.Start),
-			captures: captures,
-		})
+		copy(newThread.captures, s.zeroCapture)
+		newThread.pc = uint32(s.program.Start)
+		blockingThreads = append(blockingThreads, newThread)
 	}
+	s.tmpThreads = threads
 	s.threads = blockingThreads
 
 	s.pos += l
