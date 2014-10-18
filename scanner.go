@@ -114,7 +114,9 @@ loop:
 			case syntax.InstEmptyWidth:
 				panic("empty string pattern is not supported")
 			case syntax.InstMatch, syntax.InstFail: // clear all threads, restart
-				blockingThreads = nil
+				if len(blockingThreads) > 0 {
+					blockingThreads = blockingThreads[0:0]
+				}
 				s.freeThreads = append(s.freeThreads, thread)
 				break loop
 			case syntax.InstNop:
@@ -144,7 +146,9 @@ loop:
 
 	if len(blockingThreads) == 0 {
 		s.freeThreads = append(s.freeThreads, threads...) // free all threads
-		threads = nil
+		if len(threads) > 0 {
+			threads = threads[0:0]
+		}
 		var newThread *_Thread
 		if len(s.freeThreads) > 0 {
 			newThread = s.freeThreads[len(s.freeThreads)-1]
