@@ -3,19 +3,16 @@ package ebuf
 import "github.com/reusee/rope"
 
 type State struct {
-	rope     *rope.Rope
-	Cursors  []Cursor
-	Scanners []*Scanner
+	rope    *rope.Rope
+	Cursors []Cursor
 }
 
 func (b *Buffer) getState() State {
 	state := State{
-		rope:     b.rope,
-		Cursors:  make([]Cursor, len(b.Cursors)),
-		Scanners: make([]*Scanner, len(b.Scanners)),
+		rope:    b.rope,
+		Cursors: make([]Cursor, len(b.Cursors)),
 	}
 	copy(state.Cursors[:], b.Cursors[:])
-	copy(state.Scanners[:], b.Scanners[:])
 	return state
 }
 
